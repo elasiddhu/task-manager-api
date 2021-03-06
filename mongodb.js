@@ -1,3 +1,5 @@
+// this file is no longer used in the application. it is saved for reference purposes only
+
 const { MongoClient, ObjectID } = require('mongodb') // import mongodb modules by destructuring
 
 const connectionURL = 'mongodb://127.0.0.1:27017'
