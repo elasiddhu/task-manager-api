@@ -9,70 +9,77 @@ const port = process.env.PORT || 3000 // assign a port to localhost:3000 OR proc
 app.use(express.json())
 
 // below is our first API route. it is used to create a new user in the db
-app.post('/users', (req, res) => { // when a client (web app or postman) send a POST request to /users, this code block will send a response to the client and do something with the request
+app.post('/users', async (req, res) => { // when a client (web app or postman) send a POST request to /users, this code block will send a response to the client and do something with the request
     const user = new User(req.body)
-    user.save().then(() => {
+    try {
+        await user.save()
         res.status(201).send(user) // by default, express sets status codes to 200 assuming everything went well
-    }).catch((error) => {
+        // code on this line will only run if the promise above is fulfilled. if not, it will go down to catch error below
+    } catch (error) {
         res.status(400).send(error) // can set custom status codes with .status() method
-    })
+    }
 })
 
 // create a route to fetch multiple users (read users from the db)
-app.get('/users', (req, res) => {
-    User.find({}).then((users) => { // per Mongoose doc. Model.find() takes in an object to find as first argument. second argument is what to do with the result
+app.get('/users', async (req, res) => {
+    try {
+        const users = await User.find({}) // per Mongoose doc. Model.find() takes in an object to find as first argument. second argument is what to do with the result
         res.send(users)
-    }).catch((error) => {
+    } catch (error) {
         res.status(500).send() // sends back Status 500: Internal Server Error
-    })
+    }
 })
 
 // create a route to fetch a single user by id
-app.get('/users/:id', (req, res) => { // :id is a dynamic route parameter (value that changes per the get request)
+app.get('/users/:id', async (req, res) => { // :id is a dynamic route parameter (value that changes per the get request)
     const _id = req.params.id // assign the id from the HTTP request to _id variable
-    User.findById(_id).then((user) => {
+    try {
+        const user = await User.findById(_id)
         if (!user) { // express will always return unless there was an error. not finding data does not trigger an error so its good practice to check for a user
             return res.status(404).send()
         }
         res.send(user)
-    }).catch((error) => {
+    } catch (error) {
         res.status(500).send()
-    })
+    }
 })
 
 // create a route to add a task to the db
-app.post('/tasks', (req,res) => {
+app.post('/tasks', async (req,res) => {
     const task = new Task(req.body)
-    task.save().then(() => {
+    try {   
+        await task.save()
         res.status(200).send(task)
-    }).catch((error) => {
+    } catch (error) {
         res.status(400).send(error)
-    })
+    }
 })
 
 // create a route to read all tasks
-app.get('/tasks', (req, res) => {
-    Task.find().then((tasks) => {
+app.get('/tasks', async (req, res) => {
+    const tasks = await Task.find()
+    try {
         if (!tasks) {
-            return res.send(404).send()
+            return res.status(404).send()
         }
         res.status(200).send(tasks)
-    }).catch(() => {
+    } catch (error) {
         res.status(500).send()
-    })
+    }
 })
 
 // create a route to read a single task
-app.get('/tasks/:id', (req, res) => {
+app.get('/tasks/:id', async (req, res) => {
     const _id = req.params.id
-    Task.findById(_id).then((task) => {
+    const task = await Task.findById(_id)
+    try {
         if (!task) {
             return res.status(404).send()
         }
         res.status(200).send(task)
-    }).catch((error) => {
+    } catch (error) {
         res.status(500).send()
-    })
+    }
 })
 
 app.listen(port, () => { // initiate a server by opening and listening to a port
