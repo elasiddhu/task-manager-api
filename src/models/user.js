@@ -1,16 +1,16 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-// create a new document model
-const User = mongoose.model('Users', { // mongoose.model() takes in two arguments. first argument is string name for model. second argument is the object definition with fields we want
+// create user schema
+const userSchema = new mongoose.Schema({
     name: {
         type: String, // Sting and Number are constructor types from javascript. Other examples are Boolean, Dates, Arrays, etc...
-        required: true,
+        //required: true,
         trim: true
     },
     email: {
         type: String,
-        required: true,
+        //required: true,
         trim: true,
         lowercase: true,
         validate(value) {
@@ -21,7 +21,7 @@ const User = mongoose.model('Users', { // mongoose.model() takes in two argument
     },
     password: {
         type: String,
-        required: true,
+        //required: true,
         trim: true,
         minLength: 7,
         validate(value) {
@@ -40,6 +40,16 @@ const User = mongoose.model('Users', { // mongoose.model() takes in two argument
         }
     }
 })
+
+// mongoose schema .pre() method is a method that does something BEFORE the model is saved (e.g. bcrypt the password before saving it into the db)
+userSchema.pre('save', async function (next) { // .pre() method: first argument is the name of the event that this happens before. second argument is what to do (it must be function(){} and not an arrow function because the "this" keyword is import here)
+    const user = this // "this" gives us access to the user that is about to be saved
+    console.log('just before saving!')
+    next() // next gets called when the function is over, so that the .pre() middleware knows that everything is done
+})
+
+// create a new document model
+const User = mongoose.model('Users', userSchema)  // mongoose.model() takes in two arguments. first argument is string name for model. second argument is the object definition with fields we want (i.e. Schema)
 
 module.exports = User
 
