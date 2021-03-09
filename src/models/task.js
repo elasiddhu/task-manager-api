@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-// create a new document model
-const Task = mongoose.model('Tasks', {
+// create task Schema
+const taskSchema = ({
     description: {
         type: String,
         required: true,
@@ -13,6 +13,12 @@ const Task = mongoose.model('Tasks', {
         default: false
     }
 })
+
+// middleware would go here
+//
+
+// create a new document model
+const Task = mongoose.model('Tasks', taskSchema)
 
 module.exports = Task
 

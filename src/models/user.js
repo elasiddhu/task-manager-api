@@ -1,16 +1,19 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 // create user schema
 const userSchema = new mongoose.Schema({
     name: {
         type: String, // Sting and Number are constructor types from javascript. Other examples are Boolean, Dates, Arrays, etc...
-        //required: true,
+        required: true,
         trim: true
     },
     email: {
         type: String,
-        //required: true,
+        unique: true, // must wipe out database before this can be implemented
+        required: true,
         trim: true,
         lowercase: true,
         validate(value) {
@@ -21,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        //required: true,
+        required: true,
         trim: true,
         minLength: 7,
         validate(value) {
@@ -38,13 +41,49 @@ const userSchema = new mongoose.Schema({
                 throw new Error('Age must be a positive number.')
             }
         }
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
 })
 
+// setting up token creation when logging in
+// .methods methods are accessible on the instances. they are sometimes called instance methods
+userSchema.methods.generateAuthToken = async function () { // not using ES6 arrow function because we need access to "this" keyword
+    const user = this
+    const token = jwt.sign({ _id: user._id.toString() }, 'secrettoken')
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+    return token
+}
+
+// .statics methods are accessible on the model. they are sometimes called model methods
+// setting up a value on a schema.statics() allows us to set up middleware to check for email and password before running .findByCredentials
+userSchema.statics.findByCredentials = async (email, password) => {
+    // check if user with the inputted email is an active user
+    const user = await User.findOne({ email })
+    if (!user) {
+        throw new Error('Unable to login')
+    }
+    // check is password matches by comparing encrypted password to the entered password
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+        throw new Error('Unable to login')
+    }
+    // if user is active and password is correct, return the user
+    return user
+}
+
 // mongoose schema .pre() method is a method that does something BEFORE the model is saved (e.g. bcrypt the password before saving it into the db)
+// Hash the plain text password
 userSchema.pre('save', async function (next) { // .pre() method: first argument is the name of the event that this happens before. second argument is what to do (it must be function(){} and not an arrow function because the "this" keyword is import here)
     const user = this // "this" gives us access to the user that is about to be saved
-    console.log('just before saving!')
+    if (user.isModified('password')) { // .isModified() is a mongoose method that checks if a key was modified in a patch
+        user.password = await bcrypt.hash(user.password, 8) // overriding plain text password with the hashed password
+    }
     next() // next gets called when the function is over, so that the .pre() middleware knows that everything is done
 })
 

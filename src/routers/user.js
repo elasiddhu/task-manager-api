@@ -8,10 +8,23 @@ router.post('/users', async (req, res) => { // when a client (web app or postman
     const user = new User(req.body)
     try {
         await user.save()
-        res.status(201).send(user) // by default, express sets status codes to 200 assuming everything went well
+        const token = await user.generateAuthToken()
+        res.status(201).send({ user, token }) // by default, express sets status codes to 200 assuming everything went well
         // code on this line will only run if the promise above is fulfilled. if not, it will go down to catch error below
     } catch (error) {
         res.status(400).send(error) // can set custom status codes with .status() method
+    }
+})
+
+// route for user login
+router.post('/users/login', async (req, res) => {
+    try {
+        const user = await User.findByCredentials(req.body.email, req.body.password) // .findByCredentials is a mongoose method that will take in a user's email and password and output the user if true
+        // if the await User.findbyCredentials promise is fulfilled, it will return a user
+        const token = await user.generateAuthToken()
+        res.send({ user, token })
+    } catch (error) {
+        res.status(400).send()
     }
 })
 
@@ -50,7 +63,10 @@ router.patch('/users/:id', async (req, res) => {
     }
 
     try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runVailidators: true }) // 3 arguments. 1 = id, 2 = object to update to, 3 = optional param. new = true means return the updated object, not the old one    
+        const user = await User.findById(req.params.id)
+        updates.forEach((update) => user[update] = req.body[update])
+        await user.save()
+        // modern way to update but doesn't use .save() so you can't use middle ware //const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runVailidators: true }) // 3 arguments. 1 = id, 2 = object to update to, 3 = optional param. new = true means return the updated object, not the old one    
         if (!user) {
             return res.status(404).send()
         }

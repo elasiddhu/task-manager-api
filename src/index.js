@@ -18,17 +18,20 @@ app.listen(port, () => { // initiate a server by opening and listening to a port
     console.log(`Server is up on port ${port}`)
 })
 
-const bcrypt = require('bcryptjs')
 
+const jwt = require('jsonwebtoken')
 const myFunction = async () => {
-    const password = 'arealpassword123'
-    // note that hashing algorithms are one-way algorithms. it is impossible to get plain text password from a hashed password
-    const hashedPassword = await bcrypt.hash(password, 8) // await because bcrypt.hash() method returns a promise // 2nd argument is number of rounds (# of times hash algorithm is run)
-    console.log(password)
-    console.log(hashedPassword)
-    // now test if a given password is equal to a password in the given database
-    const isMatch = await bcrypt.compare('arealpassword123', hashedPassword) // returns a boolean if passwords match
-    console.log(isMatch)
+    // create a token
+    // return value from jwt method .sign() is your token that can be used later on
+     // .sign() first argument is id of user singing in. second argument is a random series of characters used to generate the token via an algorithm. third argument is optional to make it expire
+    const token = jwt.sign({ _id: 'abc123' }, 'thisismynewcourse', { expiresIn: '7 days' })
+    // jwt token has (3) parts, each separate by a "."
+    // part 1 is: base 64 encoded json string. known as header. contains metadata about the token and the algorithm used to generate the token
+    // part 2 is: base 64 encoded json string. know as payload or body. contains the data that we provided (e.g. _id that we provided)
+    // part 3 is: known as the signature. used to verify the token.
+    console.log(token)
+    // now verify a token
+    const data = jwt.verify(token, 'thisismynewcourse') // .verify() first argument is the token, second argument is the same string used when creating the token
+    console.log(data)
 }
-
 myFunction()
