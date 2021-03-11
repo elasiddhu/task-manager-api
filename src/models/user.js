@@ -48,7 +48,10 @@ const userSchema = new mongoose.Schema({
             type: String,
             required: true
         }
-    }]
+    }],
+    avatar: {
+        type: Buffer // type Buffer lets us store files as binary data
+    }
 }, { // second argument for schema objects is another object. is it used for additional properties
     timestamps: true // timestamps: true adds both a createdAt and updated At property. By default, timestamps are set to false
 })
@@ -70,6 +73,7 @@ userSchema.methods.toJSON = function () { // not an arrow function because we ar
     const userObject = user.toObject() // have to use mongoose method .toObject() to turn mongoose cursor (data reference) to an actual object
     delete userObject.password // delete is a vanilla javascript operator that removes an object property
     delete userObject.tokens
+    delete userObject.avatar // remove avatar from the user profile response (this doesn't remove it from the database, it just makes it so it doesn't get seen by the frontend)
     return userObject
 }
 

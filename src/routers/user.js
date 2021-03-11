@@ -1,7 +1,8 @@
 const express = require('express') // import express module from npm to use express server methods
+const multer = require('multer') // import multer module to include file upload feature
+const sharp = require('sharp') // import sharp module to provide image formatting and auto-sizing
 const User = require('../models/user') // import User model from models folder so that we can create a new user using mongoose models/validation
 const auth = require('../middleware/auth')
-const { response } = require('express')
 const router = new express.Router() // assign a new express router to router
 
 // below is our first API route. it is used to create a new user in the db
@@ -61,6 +62,42 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 })
 
+// create endpoint for users to upload their avatar
+const upload_avatar = multer({ // pass to multer an options object that takes in the configuration for the tool
+    // dest: 'avatars', // dest = destination for the file to be uploaded to. By not including 'dest' the file gets pushed onto the next function in the series of middleware
+    limits: {
+        fileSize: 1000000 // in byts
+    },
+    // fileFilter() is a function that runs when the file is attempted to be uploaded (because upload.single() is middleware)
+    // argument 1 request contains the request being made
+    // argument 2 file contains information about the file being uploaded
+    // argument 3 callback use callback to tell multer when we're done filtering the file
+    fileFilter(req, file, cb) {
+        // cb(new Error('File must be a PDF')) // call callback this way when throwing an error
+        // cb(undefined, true) // call callback this way when error is undefined and true if the upload is as expected
+        // cb(undefined, false) // call callback this way when we want to "silently reject the upload"
+        //if (!file.originalname.endsWith('.pdf')) { // .originalname is a multer method for the name of the file on the user's computer. .endsWith('') is a vanilla JS string method
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error('Please upload an image file'))
+        }
+        cb(undefined, true)
+    }
+})
+router.post('/users/me/avatar', auth, upload_avatar.single('avatar'), async (req, res) => { // auth goes before upload avatar even though they are both middleware because the user must be authenticated before uploading an avatar. 3rd argument .single() is multer middleware. argument inside .single() is the name of the key of the file being uploaded
+    // user sharp to resize avatar before saving it
+    // sharp takes in the file input from the request as an argument (req.file.buffer)
+    // .resize() resizes all of the images to the same size
+    // .png converts all of the incoming images into png format
+    // .toBuffer() is a sharp method that converts the data back to a buffer that we can access
+    const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
+    // old code line // req.user.avatar = req.file.buffer // access file uploaded from multer using req.file. buffer contains buffer of all binary data of the file
+    req.user.avatar = buffer
+    await req.user.save()
+    res.send()
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message })
+})
+
 // create a route to fetch the users profile
 router.get('/users/me', auth, async (req, res) => { // middleware should be the second arugment (between the path and the callback)
     // this route will only run if the user is logged in and authenticated so we can just do something (e.g. send back the user)
@@ -78,6 +115,20 @@ router.get('/users/:id', async (req, res) => { // :id is a dynamic route paramet
         res.send(user)
     } catch (error) {
         res.status(500).send()
+    }
+})
+
+// setup url to serve up avatar image
+router.get('/users/:id/avatar', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+        if (!user || !user.avatar) {
+            throw new Error()
+        }
+        res.set('Content-Type', 'image/jpg') // tell requester what type of data they are getting back
+        res.send(user.avatar)
+    } catch (error) {
+        res.status(404).send()
     }
 })
 
@@ -117,6 +168,13 @@ router.delete('/users/me', auth, async (req, res) => {
     } catch (error) {
         res.status(500).send()
     }
+})
+
+// endpoint to delete user avatar
+router.delete('/users/me/avatar', auth, async (req, res) => {
+    req.user.avatar = undefined // set to undefined to remove buffer data
+    await req.user.save()
+    res.send()
 })
 
 module.exports = router
