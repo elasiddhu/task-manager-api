@@ -30,16 +30,3 @@ app.use(taskRouter) // initiate routers for CRUD
 app.listen(port, () => { // initiate a server by opening and listening to a port
     console.log(`Server is up on port ${port}`)
 })
-
-const Task = require('./models/task')
-const User = require('./models/user')
-const main = async () => {
-    // find task by id and include owner (user that created the task) document
-    // const task = await Task.findById('604969127110761c44c1b284')
-    // await task.populate('owner').execPopulate() // this line uses the 'ref' property in the Task model to reference the user _id for the entire document instead of just the _id
-    // now find all tasks created by a user
-    const user = await User.findById('604968572c50fd1bf4b757a5')
-    await user.populate('tasks').execPopulate()
-    console.log(user.tasks)
-}
-main () // call main
