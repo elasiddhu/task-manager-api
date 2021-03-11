@@ -18,12 +18,31 @@ router.post('/tasks', auth, async (req,res) => { // adding auth middleware to th
     }
 })
 
-// create a route to read all tasks
+// GET /tasks?completed=false (filter all tasks to only get all tasks that's not completed)
+// GET /tasks?limit=10&skip=0 (for pagination)
+// GET /tasks?sortBy=createdAt:desc (for sorting)
 router.get('/tasks', auth, async (req, res) => {
-    // old cold line // const tasks = await Task.find()
+    // old code line // const tasks = await Task.find()
+    const match = {}
+    const sort = {}
+    if (req.query.completed) {
+        match.completed = req.query.completed === 'true' // if req.query.completed === 'true', this expression will return true and assign it to match.completed. otherwise, it's false and assigned to match.compelted
+    }
+    if (req.query.sortBy) {
+        const parts = req.query.sortBy.split(':')
+        sort[parts[0]] = parts[1] === 'desc' ? -1 : 1 // first key of sortBy (can be createdAt or completed.. etc) is assigned to second part of sortBy (aesc or desc). if descending, return -1, else return 1 (for asec)
+    }
     try {
         // this line works if you do res.status(200).send(tasks). const tasks = await Task.find({ owner: req.user._id })
-        await req.user.populate('tasks').execPopulate()
+        await req.user.populate({ // refactored .populate() to include match property
+            path: 'tasks',
+            match, // match property is used to filter out the response. // match properties can be key values for the user to type in the http request url
+            options: { // use options property to set limit, skip and sort
+                limit: parseInt(req.query.limit), // have to parse into an integer because requests are always strings
+                skip: parseInt(req.query.skip),
+                sort
+            }
+        }).execPopulate()
         res.status(200).send(req.user.tasks)
     } catch (error) {
         res.status(500).send()

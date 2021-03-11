@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 
 // create task Schema
-const taskSchema = ({
+const taskSchema = new mongoose.Schema ({
     description: {
         type: String,
         required: true,
@@ -17,6 +17,8 @@ const taskSchema = ({
         required: true,
         ref: 'Users' // create a reference relationship to the 'Users' model created in /models/user.js
     }
+}, {
+    timestamps: true
 })
 
 // middleware would go here

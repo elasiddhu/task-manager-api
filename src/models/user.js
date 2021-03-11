@@ -49,6 +49,8 @@ const userSchema = new mongoose.Schema({
             required: true
         }
     }]
+}, { // second argument for schema objects is another object. is it used for additional properties
+    timestamps: true // timestamps: true adds both a createdAt and updated At property. By default, timestamps are set to false
 })
 
 // not stored in the database. model.virtual() is just for mongoose to use as a reference. it creates a relationship between two entities
