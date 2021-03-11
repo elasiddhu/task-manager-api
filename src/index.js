@@ -10,6 +10,19 @@ const app = express() // assign a new express server to "app"
 const port = process.env.PORT || 3000 // assign a port to localhost:3000 OR process.env.PORT (which is required for the heroku port)
 
 // app.use() is middleware (meaning that it is a method used to do thing in between a processing a request and sending a response in your application)
+// middleware is commonly used to limit what users have access to
+// app.use((req, res, next) => {
+//     // console.log(req.method, req.path) // req.method to get the http request method used. req.path to get the path of the http request
+//     if (req.method === 'GET') {
+//         res.status(503).send('GET requests are disabled')
+//     } else {
+//         next() // must call next() or the request will never get sent to the run route handler ("request" will be "loading" forever)
+//     }
+// })
+// // below is middleware used for "maintenance mode": all requests should send back an error code
+// app.use((req, res, next) => {
+//     res.send('Site is currently down for maintenance. Check back soon!')
+// })
 app.use(express.json()) // express.json() is used to parse JSON data that you are sending (only required for POST and PATCH requests, not GET or DELETE)
 app.use(userRouter) // initiate routers for CRUD
 app.use(taskRouter) // initiate routers for CRUD
@@ -18,20 +31,15 @@ app.listen(port, () => { // initiate a server by opening and listening to a port
     console.log(`Server is up on port ${port}`)
 })
 
-
-const jwt = require('jsonwebtoken')
-const myFunction = async () => {
-    // create a token
-    // return value from jwt method .sign() is your token that can be used later on
-     // .sign() first argument is id of user singing in. second argument is a random series of characters used to generate the token via an algorithm. third argument is optional to make it expire
-    const token = jwt.sign({ _id: 'abc123' }, 'thisismynewcourse', { expiresIn: '7 days' })
-    // jwt token has (3) parts, each separate by a "."
-    // part 1 is: base 64 encoded json string. known as header. contains metadata about the token and the algorithm used to generate the token
-    // part 2 is: base 64 encoded json string. know as payload or body. contains the data that we provided (e.g. _id that we provided)
-    // part 3 is: known as the signature. used to verify the token.
-    console.log(token)
-    // now verify a token
-    const data = jwt.verify(token, 'thisismynewcourse') // .verify() first argument is the token, second argument is the same string used when creating the token
-    console.log(data)
+const Task = require('./models/task')
+const User = require('./models/user')
+const main = async () => {
+    // find task by id and include owner (user that created the task) document
+    // const task = await Task.findById('604969127110761c44c1b284')
+    // await task.populate('owner').execPopulate() // this line uses the 'ref' property in the Task model to reference the user _id for the entire document instead of just the _id
+    // now find all tasks created by a user
+    const user = await User.findById('604968572c50fd1bf4b757a5')
+    await user.populate('tasks').execPopulate()
+    console.log(user.tasks)
 }
-myFunction()
+main () // call main

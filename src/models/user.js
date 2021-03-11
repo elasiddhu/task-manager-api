@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const Task = require('./task')
 
 // create user schema
 const userSchema = new mongoose.Schema({
@@ -50,6 +51,26 @@ const userSchema = new mongoose.Schema({
     }]
 })
 
+// not stored in the database. model.virtual() is just for mongoose to use as a reference. it creates a relationship between two entities
+// model.virtual() creates a virtual attribute. it's virtual because it does not actually change what we store for the user document
+userSchema.virtual('tasks', { // first argument for .virtual() is a name for the virtual field. it can be any string.
+    ref: 'Tasks', // name of model created in /models/task.js
+    localField: '_id', // local field is the local property (user document) that is being referenced by the other task (_id)
+    foreignField: 'owner' // name of the field on the "other" thing (the task) that is being referenced
+})
+
+// create a method to return only public user information (hide password, tokens, etc)
+// .toJSON makes it so only the returned object (userObject) is "JSONified" to be sent in the http request
+userSchema.methods.toJSON = function () { // not an arrow function because we are using "this" keyword
+    // assign "this" to user to make the code more readable
+    const user = this
+    // create a userObject by using .toObject()
+    const userObject = user.toObject() // have to use mongoose method .toObject() to turn mongoose cursor (data reference) to an actual object
+    delete userObject.password // delete is a vanilla javascript operator that removes an object property
+    delete userObject.tokens
+    return userObject
+}
+
 // setting up token creation when logging in
 // .methods methods are accessible on the instances. they are sometimes called instance methods
 userSchema.methods.generateAuthToken = async function () { // not using ES6 arrow function because we need access to "this" keyword
@@ -85,6 +106,13 @@ userSchema.pre('save', async function (next) { // .pre() method: first argument 
         user.password = await bcrypt.hash(user.password, 8) // overriding plain text password with the hashed password
     }
     next() // next gets called when the function is over, so that the .pre() middleware knows that everything is done
+})
+
+// Middleware to delete all user tasks when user is removed
+userSchema.pre('remove', async function (next) {
+    const user = this
+    await Task.deleteMany({ owner: user._id })
+    next()
 })
 
 // create a new document model
