@@ -6,7 +6,7 @@ const auth = async (req, res, next) => {
         // grab token from request header
         const token = req.header('Authorization').replace('Bearer ','') // req.header('Authorization') grabs the 'Authorization' header key that was sent with the http request from the client
         // check to make sure the token is valid
-        const decoded = jwt.verify(token, 'secrettoken') // jwt.verify() returns the _id of the user associated with the token, and a timestamp
+        const decoded = jwt.verify(token, process.env.JWT_SECRET) // jwt.verify() returns the _id of the user associated with the token, and a timestamp
         // check to see if user exists
         const user = await User.findOne({ _id: decoded._id, 'tokens.token': token })
         // if user does not exist, throw an error

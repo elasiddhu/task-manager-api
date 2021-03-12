@@ -81,7 +81,7 @@ userSchema.methods.toJSON = function () { // not an arrow function because we ar
 // .methods methods are accessible on the instances. they are sometimes called instance methods
 userSchema.methods.generateAuthToken = async function () { // not using ES6 arrow function because we need access to "this" keyword
     const user = this
-    const token = jwt.sign({ _id: user._id.toString() }, 'secrettoken')
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
     user.tokens = user.tokens.concat({ token })
     await user.save()
     return token

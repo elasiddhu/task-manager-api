@@ -3,6 +3,7 @@ const multer = require('multer') // import multer module to include file upload 
 const sharp = require('sharp') // import sharp module to provide image formatting and auto-sizing
 const User = require('../models/user') // import User model from models folder so that we can create a new user using mongoose models/validation
 const auth = require('../middleware/auth')
+const { sendWelcomeEmail, sendCancellationEmail } = require('../emails/account')
 const router = new express.Router() // assign a new express router to router
 
 // below is our first API route. it is used to create a new user in the db
@@ -10,6 +11,8 @@ router.post('/users', async (req, res) => { // when a client (web app or postman
     const user = new User(req.body)
     try {
         await user.save()
+        // after saving the user, send a welcome e-mail
+        sendWelcomeEmail(user.email, user.name) // this is a promise but it does not need await because this function does not need to finish for the code to continue. it will send when it sends and the user will get it then
         const token = await user.generateAuthToken()
         res.status(201).send({ user, token }) // by default, express sets status codes to 200 assuming everything went well
         // code on this line will only run if the promise above is fulfilled. if not, it will go down to catch error below
@@ -164,6 +167,7 @@ router.delete('/users/me', auth, async (req, res) => {
         //     return res.status(404).send()
         // }
         await req.user.remove() // single line that achieves the same code above
+        sendCancellationEmail(req.user.email, req.user.name)
         res.send(req.user)
     } catch (error) {
         res.status(500).send()

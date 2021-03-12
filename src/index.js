@@ -7,7 +7,7 @@ const userRouter = require('./routers/user')
 const taskRouter = require('./routers/task')
 
 const app = express() // assign a new express server to "app"
-const port = process.env.PORT || 3000 // assign a port to localhost:3000 OR process.env.PORT (which is required for the heroku port)
+const port = process.env.PORT // assign a port from process.env.PORT
 
 // app.use() is middleware (meaning that it is a method used to do thing in between a processing a request and sending a response in your application)
 // middleware is commonly used to limit what users have access to
