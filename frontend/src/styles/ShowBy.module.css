@@ -1,0 +1,48 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+    background-color: var(--color-primary-white);
+    width: 35rem;
+    height: 3.6rem;
+}
+
+.show {
+    font-size: 1.4rem;
+    color: var(--color-primary-black);
+    margin-left: 1rem;
+    flex: 1;
+}
+
+.all,
+.open,
+.closed {
+    border: none;
+    background: none;
+    font-size: 1.4rem;
+    margin: 0 1rem 0 1rem;
+}
+
+.all {
+    flex: 1;
+}
+
+.open,
+.closed {
+    flex: 2;
+}
+
+.all:focus,
+.open:focus,
+.closed:focus {
+    outline: none;
+}
+
+.selected {
+    border: .1rem solid;
+    border-radius: 1rem;
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+}

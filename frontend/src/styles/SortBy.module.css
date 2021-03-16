@@ -1,0 +1,56 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+    background-color: var(--color-primary-white);
+    width: 35rem;
+    height: 3.6rem;
+}
+
+.sortby {
+    font-size: 1.4rem;
+    color: var(--color-primary-black);
+    margin-left: 1rem;
+    flex: 2;
+}
+
+.az,
+.za,
+.newold,
+.oldnew {
+    border: none;
+    background: none;
+    font-size: 1.4rem;
+}
+
+.az {
+    flex: 1.5;
+}
+
+.za {
+    flex: 1.5;
+}
+
+.newold {
+    flex: 3;
+}
+
+.oldnew {
+    flex: 3;
+}
+
+.az:focus,
+.za:focus,
+.newold:focus,
+.oldnew:focus {
+    outline: none;
+}
+
+.selected {
+    border: .1rem solid;
+    border-radius: 1rem;
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+}
